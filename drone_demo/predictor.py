@@ -244,7 +244,7 @@ class COCODemo(object):
         )
         return transform
 
-    def run_on_opencv_image(self, image):
+    def run_on_opencv_image(self, image, file_name=None, path=None):
         """
         Arguments:
             image (np.ndarray): an image as returned by OpenCV
@@ -256,6 +256,18 @@ class COCODemo(object):
         """
         predictions = self.compute_prediction(image)
         top_predictions = self.select_top_predictions(predictions)
+        if file_name and path:    
+            with open(f'{path}/{file_name}.txt', 'w') as f:
+                labels = top_predictions.get_field("labels").tolist()
+                bbox = top_predictions.bbox.tolist()
+                scores = top_predictions.get_field("scores").tolist()
+                labels = [self.CATEGORIES[i] for i in labels]
+                temp_str = ''
+                for box, score, label in zip(bbox, scores, labels):
+                    x1, y1, x2, y2 = box[0], box[1], box[2], box[3]
+                    temp_str += f"{label} {x1} {y1} {x2} {y2} {score}\n"
+                f.write(temp_str)
+                del f
 
         result = image.copy()
         if self.show_mask_heatmaps:
@@ -449,7 +461,7 @@ class COCODemo(object):
             x, y = box[:2]
             s = template.format(label, score)
             cv2.putText(
-                image, s, (x, y), cv2.FONT_HERSHEY_SIMPLEX, .5, (255, 255, 255), 1
+                image, s, (int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, .5, (255, 255, 255), 1
             )
 
         return image
